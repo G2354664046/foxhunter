@@ -1,12 +1,10 @@
 # FoxHunter Malware Detection System
 ![主页](./preview/home.PNG)
 ![主页](./preview/home2.PNG)
-<<<<<<< HEAD
-FoxHunter 是一套基于生产者‑消费者架构的自动化恶意软件检测平台。后端使用 FastAPI 提供 REST API，前端采用 Vue.js 3 + TailwindCSS 实现现代化交互，整个流程异步解耦，支持高并发上传和检测。
-=======
+
 
 FoxHunter 是一套基于生产者‑消费者架构的自动化恶意软件检测平台。后端使用 FastAPI 提供 REST API，前端采用 Vue.js 3 + TailwindCSS 实现现代化交互，整个流程异步解耦，支持高并发上传和检测。可作为本科毕设参考，目前算法改进中...
->>>>>>> eee645dca545f41b6828eb2d16af12ec3502d632
+
 
 ## 核心功能 🎯
 
