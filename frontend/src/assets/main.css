@@ -1,0 +1,27 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* 自定义样式 */
+:root {
+  --bg-deep: #050510;
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #0f0f24;
+  --bg-card: rgba(15, 15, 40, 0.7);
+  --accent: #00d4aa;
+  --accent-glow: rgba(0, 212, 170, 0.3);
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888a0;
+  --border: rgba(100, 100, 140, 0.2);
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
