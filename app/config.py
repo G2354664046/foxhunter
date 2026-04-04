@@ -25,11 +25,12 @@ class Settings(BaseSettings):
         "MYSQL_URL",
         "mysql+pymysql://root:123456cxn@localhost:3306/foxhunter?charset=utf8mb4",
     )
-    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-    # Celery
-    celery_broker_url: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-    celery_result_backend: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+    # Redis / Celery：须由 Field + .env 注入；勿用类体里的 os.getenv，否则易与 pydantic-settings 的 .env 加载顺序不一致。
+    # 仅密码时格式为 redis://:密码@host:6379/0（密码前必须有冒号）；错误写成 redis://密码@host 会把密码当成用户名。
+    redis_url: str = Field(default="redis://localhost:6379/0")
+    celery_broker_url: str = Field(default="redis://localhost:6379/0")
+    celery_result_backend: str = Field(default="redis://localhost:6379/0")
 
     # App
     app_name: str = "FoxHunter"
