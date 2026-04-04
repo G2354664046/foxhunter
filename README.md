@@ -1,5 +1,5 @@
-!( "images/home0.png")
-!( "images/home.png")
+!(./images/home0.png)
+!(./images/home.png)
 
 # FoxHunter Malware Detection System
 ![首页]( "图片标题(可选)")
