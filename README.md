@@ -1,8 +1,7 @@
-!(./images/home0.png)
-!(./images/home.png)
+![](./images/home0.png)
+![](./images/home.png)
 
 # FoxHunter Malware Detection System
-![首页]( "图片标题(可选)")
 FoxHunter 是一套基于生产者‑消费者架构的自动化恶意软件检测平台。后端使用 FastAPI 提供 REST API，前端采用 Vue.js 3 + TailwindCSS 实现现代化交互，整个流程异步解耦，支持高并发上传和检测。
 
 ## 核心功能 🎯
