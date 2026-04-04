@@ -1,5 +1,5 @@
 
-![](images/hmoe0.JPG)
+![](images/home0.JPG)
 ![](images/home.JPG)
 
 # FoxHunter Malware Detection System
