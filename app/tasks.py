@@ -1,11 +1,12 @@
 from celery_app import celery_app
 from app.database import SessionLocal
 from app.models.sample import Sample
-from app.services.feature_extraction import extract_pe_features
-from app.services.model_inference import (
-    ensemble_prediction,
+from app.services import (
+    build_file_detection_result,
+    extract_pe_features,
     predict_cnn,
     predict_random_forest,
+    scan_file_for_detection,
 )
 import os
 import json
@@ -23,22 +24,22 @@ def process_sample(sample_id: int, file_path: str):
         sample.status = "processing"
         db.commit()
 
-        # Extract features
-        features = extract_pe_features(file_path)
+        vt_summary = scan_file_for_detection(file_path, sample.hash)
 
-        # Predict with models
+        try:
+            features = extract_pe_features(file_path)
+        except Exception:
+            features = {}
+
         rf_score = predict_random_forest(features)
         cnn_score = predict_cnn(file_path)
 
-        # Ensemble
-        result = ensemble_prediction(rf_score, cnn_score)
+        result = build_file_detection_result(rf_score, cnn_score, vt_summary)
 
-        # Update sample
         sample.status = "completed"
         sample.result = json.dumps(result, ensure_ascii=False)
         db.commit()
 
-        # Clean up file
         os.remove(file_path)
 
     except Exception as e:

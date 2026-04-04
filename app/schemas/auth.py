@@ -19,3 +19,14 @@ class UserPublic(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+class ProfileUpdateRequest(BaseModel):
+    username: str
+    email: EmailStr
+    current_password: str
+    new_password: str | None = None
+
+
+class ProfileUpdateResponse(UserPublic):
+    access_token: str | None = None
+

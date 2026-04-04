@@ -19,7 +19,13 @@ def scan_hash(file_hash: str):
         raise HTTPException(status_code=400, detail="file_hash is required")
 
     if not settings.virustotal_api_key:
-        raise HTTPException(status_code=503, detail="VirusTotal API key not configured")
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "未配置有效的 VIRUSTOTAL_API_KEY。请在 VirusTotal 获取 API Key，"
+                "写入 foxhunter/.env 后重启 uvicorn。"
+            ),
+        )
 
     headers = {"x-apikey": settings.virustotal_api_key}
     url = f"https://www.virustotal.com/api/v3/files/{file_hash}"

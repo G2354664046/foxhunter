@@ -1,13 +1,29 @@
 import os
-from pydantic_settings import BaseSettings
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PLACEHOLDER_API_KEYS = frozenset(
+    {
+        "",
+        "yourkey",
+        "your_urlhaus_key",
+        "your_virustotal_key",
+        "changeme",
+        "xxx",
+    }
+)
+
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
     # Database
     # SQLAlchemy URL. Example (PyMySQL, recommended on Windows):
     # mysql+pymysql://user:password@localhost:3306/foxhunter?charset=utf8mb4
     mysql_url: str = os.getenv(
         "MYSQL_URL",
-        "mysql+pymysql://root:123456@cxn@localhost:3306/foxhunter?charset=utf8mb4",
+        "mysql+pymysql://root:123456cxn@localhost:3306/foxhunter?charset=utf8mb4",
     )
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -26,11 +42,22 @@ class Settings(BaseSettings):
 
     # Uploads
     upload_dir: str = os.getenv("UPLOAD_DIR", "uploads")
-    # External services
-    urlhaus_api_key: str | None = os.getenv("URLHAUS_API_KEY")
-    virustotal_api_key: str | None = os.getenv("VIRUSTOTAL_API_KEY")
 
-    class Config:
-        env_file = ".env"
+    # 必须由 pydantic 从 .env 读取；os.getenv 在类定义阶段执行，读不到 .env
+    urlhaus_api_key: str | None = Field(default=None)
+    virustotal_api_key: str | None = Field(default=None)
+
+    @field_validator("urlhaus_api_key", "virustotal_api_key", mode="before")
+    @classmethod
+    def _normalize_optional_api_key(cls, v: object) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            return None
+        s = v.strip()
+        if not s or s.lower() in _PLACEHOLDER_API_KEYS:
+            return None
+        return s
+
 
 settings = Settings()

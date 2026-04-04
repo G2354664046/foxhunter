@@ -20,7 +20,7 @@
             恶意文件检测平台
           </h1>
           <p class="text-lg mb-10 reveal text-gray-400" style="animation-delay: 0.1s;">
-            整合数十款主流杀毒引擎，提供全面的恶意软件检测与分析服务
+            整合多款主流杀毒引擎，提供全面的恶意软件检测与分析服务
           </p>
 
           <!-- Tab 切换 -->
@@ -216,7 +216,7 @@
                 </svg>
               </div>
               <h3 class="text-lg font-semibold mb-2">多引擎检测</h3>
-              <p class="text-gray-400 text-sm">整合30+主流杀毒引擎，提供全面的恶意软件检测覆盖</p>
+              <p class="text-gray-400 text-sm">整合多款主流杀毒引擎，提供全面的恶意软件检测覆盖</p>
             </div>
 
             <div class="feature-card reveal" style="animation-delay: 0.1s;">
@@ -364,6 +364,24 @@ import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../lib/api'
 
+/** 解析 FastAPI 返回的 detail，避免只显示笼统提示 */
+function formatAxiosError(e) {
+  const d = e?.response?.data?.detail
+  if (typeof d === 'string') return d
+  if (Array.isArray(d)) {
+    return d.map((x) => x.msg || JSON.stringify(x)).join('；')
+  }
+  if (e?.code === 'ERR_NETWORK' || e?.message === 'Network Error') {
+    return '无法连接后端，请确认已启动 uvicorn（如端口 8000）且 Vite 代理正常。'
+  }
+  return e?.message || '请求失败'
+}
+
+/** 与 Results.vue 中一致，用于 URL/哈希 跳转预览 */
+const RESULTS_PREVIEW_KEY = 'foxhunter_results_preview'
+
+const router = useRouter()
+
 // 响应式数据
 const activeTab = ref('file')
 const selectedFile = ref(null)
@@ -372,8 +390,6 @@ const hashInput = ref('')
 const fileInput = ref(null)
 const starfield = ref(null)
 const fireflies = ref(null)
-// const router = useRouter()
-
 // 统计数据
 const stats = ref({
   todayScans: 1247,
@@ -395,11 +411,9 @@ const uploadError = ref('')
 // 检测引擎
 const engines = ref([
   { name: 'CXN_ML', version: '1.0.1' },
-  { name: 'YARA', version: '4.2.3' },
+  { name: 'CXN_RF', version: '1.2.3' },
   { name: 'VirusTotal', version: 'API v3' },
-  { name: 'MalwareBazaar', version: '1.0' },
-  { name: 'Hybrid Analysis', version: '2.1' },
-  { name: 'Joe Sandbox', version: '3.0' }
+  { name: 'URLhaus', version: '1.0' }
 ])
 
 // 萤火虫动画数据
@@ -472,9 +486,14 @@ const scanUrl = async () => {
       params: { url: urlInput.value }
     })
     urlResult.value = resp.data
+    sessionStorage.setItem(
+      RESULTS_PREVIEW_KEY,
+      JSON.stringify({ type: 'url', data: resp.data, at: Date.now() })
+    )
+    router.push({ name: 'Results', params: { id: 'preview' }, query: { type: 'url' } })
   } catch (e) {
     console.error('URL 检测失败', e)
-    urlError.value = 'URL 检测失败，请稍后重试或检查后端 URL 扫描服务是否已部署。'
+    urlError.value = formatAxiosError(e)
   } finally {
     urlLoading.value = false
   }
@@ -490,9 +509,14 @@ const queryHash = async () => {
       params: { file_hash: hashInput.value }
     })
     hashResult.value = resp.data
+    sessionStorage.setItem(
+      RESULTS_PREVIEW_KEY,
+      JSON.stringify({ type: 'hash', data: resp.data, at: Date.now() })
+    )
+    router.push({ name: 'Results', params: { id: 'preview' }, query: { type: 'hash' } })
   } catch (e) {
     console.error('哈希查询失败', e)
-    hashError.value = '哈希查询失败，请稍后重试或检查后端 VirusTotal API Key 是否已配置。'
+    hashError.value = formatAxiosError(e)
   } finally {
     hashLoading.value = false
   }
@@ -513,13 +537,14 @@ const uploadFile = async () => {
     const response = await api.post('/api/v1/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
+    const sid = response.data.sample_id
     uploadResult.value = {
-      id: response.data.sample_id,
+      id: sid,
       filename: selectedFile.value.name,
       status: 'pending',
       result: null
     }
-    pollResult(response.data.sample_id)
+    router.push({ name: 'Results', params: { id: String(sid) }, query: { type: 'file' } })
   } catch (error) {
     console.error('首页上传失败:', error)
     if (error.response && error.response.status === 401) {
@@ -530,22 +555,6 @@ const uploadFile = async () => {
   } finally {
     uploading.value = false
   }
-}
-
-const pollResult = async (sampleId) => {
-  const poll = async () => {
-    try {
-      const response = await api.get(`/api/v1/result/${sampleId}`)
-      uploadResult.value = response.data
-      if (response.data.status === 'completed' || response.data.status === 'failed') {
-        return
-      }
-      setTimeout(poll, 2000)
-    } catch (error) {
-      console.error('结果轮询失败:', error)
-    }
-  }
-  poll()
 }
 
 // 最近检测动态
