@@ -6,6 +6,7 @@ from typing import Optional, Any
 class SampleResponse(BaseModel):
     id: int
     filename: str
+    sample_type: str = "file"
     status: str
     result: Optional[Any] = None
     created_at: datetime

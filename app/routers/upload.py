@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models.sample import Sample
 from app.models.user import User
 from app.tasks import process_sample
+from app.utils import is_supported_upload, save_as_binary_file
 
 router = APIRouter()
 
@@ -22,6 +23,8 @@ async def upload_sample(
 ):
     # 读取文件内容
     content = await file.read()
+    if not is_supported_upload(file.filename):
+        raise HTTPException(status_code=400, detail="仅支持上传 .exe/.dll/.bin 文件")
 
     # 计算文件哈希
     file_hash = hashlib.sha256(content).hexdigest()
@@ -44,6 +47,7 @@ async def upload_sample(
     new_sample = Sample(
         user_id=user.id,
         filename=file.filename,
+        sample_type="file",
         hash=file_hash,
         status="pending",
     )
@@ -51,12 +55,15 @@ async def upload_sample(
     db.commit()
     db.refresh(new_sample)
 
-    # 保存文件到磁盘供worker读取（使用 sample_id 做前缀，避免重名）
+    # 统一保存为 .bin，供后续灰度图转换与检测流程使用
     safe_name = os.path.basename(file.filename)
-    filename = f"{new_sample.id}_{int(time.time())}_{safe_name}"
-    file_path = os.path.join(settings.upload_dir, filename)
-    with open(file_path, "wb") as f:
-        f.write(content)
+    saved = save_as_binary_file(
+        content=content,
+        original_filename=safe_name,
+        output_dir=settings.upload_dir,
+        prefix=f"{new_sample.id}_{int(time.time())}",
+    )
+    file_path = str(saved["output_path"])
 
     # 异步调度处理
     async_result = process_sample.delay(new_sample.id, file_path)

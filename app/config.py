@@ -43,6 +43,17 @@ class Settings(BaseSettings):
 
     # Uploads
     upload_dir: str = os.getenv("UPLOAD_DIR", "uploads")
+    out_data_dir: str = os.getenv("OUT_DATA_DIR", "out_data")
+
+    # CNN model assets
+    cnn_weights_path: str = os.getenv(
+        "CNN_WEIGHTS_PATH",
+        r"model_assets/cnn/pesi.weights.h5",
+    )
+    cnn_class_index_path: str = os.getenv(
+        "CNN_CLASS_INDEX_PATH",
+        r"model_assets/cnn/class_index.json",
+    )
 
     # 必须由 pydantic 从 .env 读取；os.getenv 在类定义阶段执行，读不到 .env
     urlhaus_api_key: str | None = Field(default=None)

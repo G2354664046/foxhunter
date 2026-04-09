@@ -20,4 +20,5 @@ def init_db():
     # Ensure models are imported so SQLAlchemy can create tables.
     from app.models import user as _user  # noqa: F401
     from app.models import sample as _sample  # noqa: F401
+    from app.models import cnn_detection_result as _cnn_detection_result  # noqa: F401
     Base.metadata.create_all(bind=engine)

@@ -1,17 +1,21 @@
 def build_file_detection_result(
-    rf_confidence: float,
     cnn_confidence: float,
     virustotal_summary: dict,
+    cnn_detail: dict | None = None,
+    gray_image_path: str | None = None,
 ) -> dict:
     """
-    合并 cxn_random_forest / cxn_cnn 占位分数与 VirusTotal 多引擎摘要。
+    合并 cxn_cnn 家族分类结果与 VirusTotal 多引擎摘要。
     若 VT 报恶意引擎数 > 0，综合判定为恶意并提高置信度。
     """
-    base = ensemble_prediction(rf_confidence, cnn_confidence)
+    base = ensemble_prediction(cnn_confidence)
     out: dict = {
         **base,
-        "cxn_models_note": "cxn_random_forest 与 cxn_cnn 当前为占位分数，待接入训练权重。",
+        "cxn_models_note": "cxn_cnn 用于恶意家族多分类；恶意二分类优先参考 VirusTotal 多引擎结果。",
         "virustotal": virustotal_summary,
+        "cnn_detail": cnn_detail or {},
+        "gray_image_path": gray_image_path,
+        "family_confidence": float(cnn_confidence),
     }
     vt = virustotal_summary or {}
     if not vt.get("configured") or vt.get("status") != "ok":
@@ -26,20 +30,13 @@ def build_file_detection_result(
     return out
 
 
-def ensemble_prediction(rf_confidence: float, cnn_confidence: float) -> dict:
+def ensemble_prediction(cnn_confidence: float) -> dict:
     """
-    Ensemble prediction using weighted voting (RF + CNN).
+    Baseline prediction using CNN family confidence only.
+    恶意二分类由 VT 覆盖，故默认基线为安全并保留家族置信度。
     """
-    weight_rf = 0.6
-    weight_cnn = 0.4
-    final_score = weight_rf * rf_confidence + weight_cnn * cnn_confidence
-
-    is_malware = final_score > 0.5
-    confidence = final_score if is_malware else 1 - final_score
-
     return {
-        "is_malware": is_malware,
-        "confidence": confidence,
-        "rf_score": rf_confidence,
+        "is_malware": False,
+        "confidence": max(0.0, min(float(cnn_confidence), 1.0)),
         "cnn_score": cnn_confidence,
     }

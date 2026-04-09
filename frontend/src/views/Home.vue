@@ -397,6 +397,7 @@ const stats = ref({
   pendingScans: 23,
   engines: 32
 })
+let statsTimer = null
 
 // 最近检测：从后端动态获取
 const recentScans = ref([])
@@ -486,11 +487,11 @@ const scanUrl = async () => {
       params: { url: urlInput.value }
     })
     urlResult.value = resp.data
-    sessionStorage.setItem(
-      RESULTS_PREVIEW_KEY,
-      JSON.stringify({ type: 'url', data: resp.data, at: Date.now() })
-    )
-    router.push({ name: 'Results', params: { id: 'preview' }, query: { type: 'url' } })
+    const rec = await api.post('/api/v1/samples/url-record', {
+      url: urlInput.value,
+      result: resp.data
+    })
+    router.push({ name: 'Results', params: { id: String(rec.data.sample_id) }, query: { type: 'url' } })
   } catch (e) {
     console.error('URL 检测失败', e)
     urlError.value = formatAxiosError(e)
@@ -509,11 +510,11 @@ const queryHash = async () => {
       params: { file_hash: hashInput.value }
     })
     hashResult.value = resp.data
-    sessionStorage.setItem(
-      RESULTS_PREVIEW_KEY,
-      JSON.stringify({ type: 'hash', data: resp.data, at: Date.now() })
-    )
-    router.push({ name: 'Results', params: { id: 'preview' }, query: { type: 'hash' } })
+    const rec = await api.post('/api/v1/samples/hash-record', {
+      file_hash: hashInput.value,
+      result: resp.data
+    })
+    router.push({ name: 'Results', params: { id: String(rec.data.sample_id) }, query: { type: 'hash' } })
   } catch (e) {
     console.error('哈希查询失败', e)
     hashError.value = formatAxiosError(e)
@@ -571,13 +572,30 @@ const fetchRecentScans = async () => {
       timestamp: new Date(item.created_at).toLocaleString(),
       // 复用 size 字段展示（脱敏后的）用户名
       size: item.username ? `用户：${item.username}` : '',
-      progress: 100
+      progress: getProgressWidth(item.status)
     }))
   } catch (e) {
     console.error('加载最近检测动态失败', e)
     recentError.value = '加载最近检测动态失败，请稍后重试。'
   } finally {
     recentLoading.value = false
+  }
+}
+
+// 实时统计
+const fetchStats = async () => {
+  try {
+    const resp = await api.get('/api/v1/samples/stats')
+    const d = resp.data || {}
+    stats.value = {
+      todayScans: Number(d.today_scans ?? 0),
+      malwareFound: Number(d.malware_found ?? 0),
+      pendingScans: Number(d.pending_scans ?? 0),
+      engines: Number(d.engines ?? engines.value.length)
+    }
+  } catch (e) {
+    // 统计失败时保持页面当前值，不打断其他功能
+    console.error('加载实时统计失败', e)
   }
 }
 
@@ -604,10 +622,19 @@ const getStatusText = (status) => {
 
 const getProgressClass = (status) => {
   switch (status) {
-    case 'malware': return 'bg-red-500'
-    case 'safe': return 'bg-green-500'
-    case 'processing': return 'bg-yellow-500'
+    case 'completed': return 'bg-green-500'
+    case 'processing': return 'bg-green-500'
+    case 'failed': return 'bg-gray-500'
     default: return 'bg-gray-500'
+  }
+}
+
+const getProgressWidth = (status) => {
+  switch (status) {
+    case 'completed': return 100
+    case 'processing': return 50
+    case 'failed': return 100
+    default: return 0
   }
 }
 
@@ -729,10 +756,17 @@ onMounted(() => {
 
   // 加载最近检测动态
   fetchRecentScans()
+  // 加载实时统计并定时刷新
+  fetchStats()
+  statsTimer = setInterval(fetchStats, 30000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleReveal)
+  if (statsTimer) {
+    clearInterval(statsTimer)
+    statsTimer = null
+  }
 })
 </script>
 

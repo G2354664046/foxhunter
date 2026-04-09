@@ -64,7 +64,11 @@ foxhunter/
    CELERY_BROKER_URL=${REDIS_URL}
    CELERY_RESULT_BACKEND=${REDIS_URL}
    UPLOAD_DIR=uploads
+   OUT_DATA_DIR=out_data
    JWT_SECRET_KEY=dev-change-me
+   # CNN 权重与类别索引（已整合到 foxhunter/model_assets/cnn）
+   CNN_WEIGHTS_PATH=model_assets/cnn/pesi.weights.h5
+   CNN_CLASS_INDEX_PATH=model_assets/cnn/class_index.json
    # 可选：URLhaus / VirusTotal API Key
    URLHAUS_API_KEY=your_urlhaus_key
    VIRUSTOTAL_API_KEY=your_virustotal_key
@@ -100,6 +104,15 @@ npm run dev
 2. 点击右上角 **登录/注册**，先注册一个用户并登录
 3. 进入 **文件检测** 页面上传样本
 4. 前端会轮询 `/api/v1/result/{id}` 展示检测状态与结果（由 Celery 后台异步更新）
+
+### 文件检测处理链路（当前实现）
+
+1. 上传 `.exe/.dll/.bin` 文件到 `/api/v1/upload`（后端统一转存为 `.bin`）
+2. Celery 任务读取 `.bin`，转换为灰度图并落盘到 `out_data/`
+3. 使用训练好的 CNN 权重进行推理（`CNN_WEIGHTS_PATH`）
+4. 结果写入：
+   - `samples.result`（融合后的 JSON，供结果页展示）
+   - `cnn_detection_results`（参考测试脚本 `results.csv` 设计的结构化表）
 
 ## 主要接口 📡
 
