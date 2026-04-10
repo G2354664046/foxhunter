@@ -1,0 +1,234 @@
+{
+  "generated_at": "2026-04-10T04:36:56",
+  "base_url": "http://localhost:8000",
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "acceptable_degraded": 0,
+    "pass_rate": 100.0
+  },
+  "results": [
+    {
+      "case_id": "TE001",
+      "name": "用户登录系统用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：正确密码登录",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "返回JWT"
+      },
+      "reverse": {
+        "label": "反向：错误密码",
+        "expected_status": 401,
+        "passed": true,
+        "actual_status": 401,
+        "detail": "Incorrect username or password"
+      },
+      "timestamp": "2026-04-10T04:36:49"
+    },
+    {
+      "case_id": "TE002",
+      "name": "用户注册系统用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：新用户注册",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "注册成功"
+      },
+      "reverse": {
+        "label": "反向：重复用户名/邮箱",
+        "expected_status": 400,
+        "passed": true,
+        "actual_status": 400,
+        "detail": "Username or email already exists"
+      },
+      "timestamp": "2026-04-10T04:36:49"
+    },
+    {
+      "case_id": "TE003",
+      "name": "获取当前用户信息用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：有效Token访问/me",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "返回当前用户"
+      },
+      "reverse": [
+        {
+          "label": "反向：无Token访问/me",
+          "expected_status": 401,
+          "passed": true,
+          "actual_status": 401,
+          "detail": "Not authenticated"
+        },
+        {
+          "label": "反向：无效Token访问/me",
+          "expected_status": 401,
+          "passed": true,
+          "actual_status": 401,
+          "detail": "Could not validate credentials"
+        }
+      ],
+      "timestamp": "2026-04-10T04:36:49"
+    },
+    {
+      "case_id": "TE004",
+      "name": "样本文件上传并触发异步检测用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：上传.bin",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "sample_id=8"
+      },
+      "reverse": {
+        "label": "反向：上传非法扩展名",
+        "expected_status": 400,
+        "passed": true,
+        "actual_status": 400,
+        "detail": "仅支持上传 .exe/.dll/.bin 文件"
+      },
+      "timestamp": "2026-04-10T04:36:49"
+    },
+    {
+      "case_id": "TE005",
+      "name": "查询单个样本检测结果用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：查询有效样本结果",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "status=processing"
+      },
+      "reverse": {
+        "label": "反向：查询不存在ID",
+        "expected_status": 404,
+        "passed": true,
+        "actual_status": 404,
+        "detail": "Sample not found"
+      },
+      "timestamp": "2026-04-10T04:36:52"
+    },
+    {
+      "case_id": "TE006",
+      "name": "查询当前用户样本记录列表用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：有效Token列表",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "共1条"
+      },
+      "reverse": [
+        {
+          "label": "反向：无Token",
+          "expected_status": 401,
+          "passed": true,
+          "actual_status": 401,
+          "detail": "Not authenticated"
+        },
+        {
+          "label": "反向：无效Token",
+          "expected_status": 401,
+          "passed": true,
+          "actual_status": 401,
+          "detail": "Could not validate credentials"
+        }
+      ],
+      "timestamp": "2026-04-10T04:36:52"
+    },
+    {
+      "case_id": "TE007",
+      "name": "删除指定样本记录用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：删除有效样本",
+        "expected_status": "204或200",
+        "passed": true,
+        "actual_status": 204,
+        "detail": "删除成功"
+      },
+      "reverse": {
+        "label": "反向：删除不存在ID",
+        "expected_status": 404,
+        "passed": true,
+        "actual_status": 404,
+        "detail": "Sample not found"
+      },
+      "timestamp": "2026-04-10T04:36:52"
+    },
+    {
+      "case_id": "TE008",
+      "name": "URL安全检测用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：非空url",
+        "expected_status": "200或503降级",
+        "passed": true,
+        "actual_status": 200,
+        "detail": "URLhaus返回",
+        "acceptable_degraded": false
+      },
+      "reverse": {
+        "label": "反向：url为空",
+        "expected_status": 400,
+        "passed": true,
+        "actual_status": 400,
+        "detail": "请提供要检测的 URL"
+      },
+      "timestamp": "2026-04-10T04:36:55"
+    },
+    {
+      "case_id": "TE009",
+      "name": "文件Hash情报查询用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：非空file_hash",
+        "expected_status": "200或503降级",
+        "passed": true,
+        "actual_status": 200,
+        "detail": "VT返回",
+        "acceptable_degraded": false
+      },
+      "reverse": {
+        "label": "反向：file_hash为空",
+        "expected_status": 400,
+        "passed": true,
+        "actual_status": 400,
+        "detail": "file_hash is required"
+      },
+      "timestamp": "2026-04-10T04:36:56"
+    },
+    {
+      "case_id": "TE010",
+      "name": "健康检查接口用例",
+      "passed": true,
+      "forward": {
+        "label": "正向：健康检查",
+        "expected_status": 200,
+        "passed": true,
+        "actual_status": 200,
+        "detail": "healthy"
+      },
+      "reverse": {
+        "label": "反向：服务不可用（未自动执行）",
+        "expected_status": "连接失败/5xx",
+        "skipped": true,
+        "passed": true,
+        "actual_status": null,
+        "detail": "需停止后端或改用错误地址后手动验证；本脚本不自动模拟"
+      },
+      "timestamp": "2026-04-10T04:36:56"
+    }
+  ]
+}
