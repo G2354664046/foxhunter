@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences
+GET,hash_scan,HTTPError('429 Client Error: Too Many Requests for url: hash_scan'),4

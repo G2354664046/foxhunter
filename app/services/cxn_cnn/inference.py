@@ -26,7 +26,7 @@ def _build_cnn(num_classes: int):
             "未检测到 tensorflow，请先安装项目依赖后再执行 CNN 检测。"
         ) from exc
 
-    # 与 malware-classification-CNN-main/scripts/test.py 保持一致
+    # 与 训练模型malware-classification-CNN-main/scripts/test.py 保持一致
     model = Sequential()
     model.add(Input(shape=(*TARGET_SIZE, 3)))
     model.add(Conv2D(32, kernel_size=(3, 3), activation="relu", padding="same"))
@@ -292,9 +292,6 @@ def _get_model():
 
 
 def _center_crop_or_pad_to_target(image: np.ndarray, target_h: int = 256, target_w: int = 256) -> np.ndarray:
-    """
-    与源项目 preprocess.py 思路一致：不拉伸，仅中心裁剪或补零到 256x256。
-    """
     if image.ndim == 2:
         image = np.expand_dims(image, axis=-1)
     h, w = image.shape[0], image.shape[1]
