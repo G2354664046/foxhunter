@@ -4,7 +4,7 @@ services:
     container_name: foxhunter-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: your_password
       MYSQL_DATABASE: foxhunter
       TZ: Asia/Shanghai
     ports:
@@ -14,13 +14,72 @@ services:
       - --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pyour_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7
     container_name: foxhunter-redis
     restart: unless-stopped
+    command: ["redis-server", "--requirepass", "your_password"]
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "your_password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: python:3.11-slim
+    container_name: foxhunter-api
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    environment:
+      MYSQL_URL: mysql+pymysql://root:your_password@mysql:3306/foxhunter?charset=utf8mb4
+      REDIS_URL: redis://:your_password@redis:6379/0
+      CELERY_BROKER_URL: redis://:your_password@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:your_password@redis:6379/0
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+
+  worker:
+    image: python:3.11-slim
+    container_name: foxhunter-worker
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    environment:
+      MYSQL_URL: mysql+pymysql://root:your_password@mysql:3306/foxhunter?charset=utf8mb4
+      REDIS_URL: redis://:your_password@redis:6379/0
+      CELERY_BROKER_URL: redis://:your_password@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:your_password@redis:6379/0
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             celery -A celery_app worker --loglevel=info"
 
 volumes:
   mysql_data:

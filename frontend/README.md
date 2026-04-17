@@ -1,118 +1,90 @@
 # FoxHunter Frontend
 
-Vue.js 3 frontend for the FoxHunter malware detection system.
+FoxHunter 前端项目，基于 Vue 3 + Vite，提供恶意样本检测平台的 Web 界面。
 
-## Features
+## 技术栈
 
-- Vue 3 Composition API
-- Vue Router for navigation
-- Pinia for state management
-- ECharts for data visualization
-- Tailwind CSS for styling
-- JWT 登录态（本地存储 Token，自动携带 Authorization 头）
-- Interactive file upload with drag & drop
-- Real-time detection status
-- Responsive design with dark theme
-- Animated background effects
+- Vue 3（Composition API）
+- Vue Router
+- Pinia
+- Axios
+- ECharts + vue-echarts
+- Tailwind CSS
 
-## Project Structure
+## 主要功能
 
-```
+- 用户认证：登录、注册、找回密码、个人资料、设置页
+- 首页检测入口：文件检测、URL 检测、哈希查询
+- 文件上传：支持 `.exe/.dll/.bin`，提交后跳转结果页
+- 结果展示：支持轮询检测状态、摘要可视化、明细 JSON
+- 样本记录：查看历史检测记录并删除
+- 鉴权访问控制：受保护页面需登录后访问
+
+## 路由说明
+
+- `/`：首页（检测入口）
+- `/samples`：样本记录（需登录）
+- `/results/:id`：检测结果（需登录；`preview` 支持预览）
+- `/login`：登录/注册入口（通过 query 切换模式）
+- `/forgot-password`：找回密码
+- `/profile`：个人信息（需登录）
+- `/settings`：系统设置（需登录）
+
+## 目录结构
+
+```text
 frontend/
-├── public/                 # Static assets
 ├── src/
-│   ├── assets/
-│   │   └── main.css       # Global styles with Tailwind
-│   ├── components/
-│   │   └── Header.vue     # Navigation component
-│   ├── views/
-│   │   ├── Home.vue       # Landing page with upload interface
-│   │   ├── Upload.vue     # File upload page
-│   │   └── Results.vue    # Detection results page
-│   ├── router/
-│   │   └── index.js       # Vue Router configuration
-│   ├── stores/
-│   │   └── sample.js      # Pinia store for sample management
-│   ├── App.vue            # Root component
-│   └── main.js            # Application entry
+│   ├── components/        # 通用组件（如 Header）
+│   ├── views/             # 页面视图
+│   ├── router/            # 路由配置
+│   ├── stores/            # Pinia 状态管理
+│   ├── lib/               # API 与 JWT 工具
+│   ├── assets/            # 样式与静态资源
+│   ├── App.vue
+│   └── main.js
+├── public/
 ├── package.json
-├── vite.config.js
-├── tailwind.config.js     # Tailwind CSS configuration
-├── postcss.config.js      # PostCSS configuration
-├── index.html             # HTML entry point
 └── README.md
 ```
 
-## Installation
+## 安装与运行
 
 ```bash
 cd frontend
 npm install
-```
-
-## Development
-
-```bash
 npm run dev
 ```
 
-The development server will start at `http://localhost:5173` and proxy API requests to the FastAPI backend.
+默认开发地址：`http://localhost:5173`
 
-## Build
+## 打包与预览
 
 ```bash
 npm run build
+npm run preview
 ```
 
-## Features Overview
+## 后端联调
 
-### Home Page
-- Interactive landing page with animated starfield and fireflies
-- Tab-based interface for different scan types (File, URL, Hash)
-- Drag & drop file upload with visual feedback
-- Real-time statistics display
-- Feature showcase with scroll animations
+前端通过 `axios` 调用后端 `/api/v1/*` 接口，并自动在请求头携带本地保存的 JWT：
 
-### File Upload
-- Drag & drop interface with hover effects
-- File type validation (.exe, .dll, .bin)
-- Real-time upload progress
-- Integration with backend API
+- `Authorization: Bearer <access_token>`
 
-### Results Display
-- Detection status tracking
-- Confidence score visualization
-- Model comparison (Random Forest vs CNN) with bar chart powered by ECharts
-- Detailed scan results with progress bars
+核心接口包含：
 
-## API Integration
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/register`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/upload`
+- `GET /api/v1/result/{id}`
+- `GET /api/v1/samples`
+- `DELETE /api/v1/samples/{id}`
+- `GET /api/v1/url/scan`
+- `GET /api/v1/hash/scan`
 
-The frontend communicates with the FastAPI backend through:
+## 开发提示
 
-- `POST /api/v1/auth/register` - Register
-- `POST /api/v1/auth/login` - Login (get JWT access_token)
-- `GET /api/v1/auth/me` - Current user
-- `POST /api/v1/upload` - File upload endpoint
-- `GET /api/v1/result/{sample_id}` - Results retrieval
-
-## Styling
-
-- **Tailwind CSS**: Utility-first CSS framework
-- **Custom CSS Variables**: Consistent theming
-- **Animations**: Smooth transitions and micro-interactions
-- **Responsive Design**: Mobile-first approach
-- **Dark Theme**: Cyberpunk-inspired design
-
-## Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-## API Integration
-
-The frontend communicates with the FastAPI backend through the following endpoints:
-
-- `POST /api/v1/upload` - Upload file for scanning
-- `GET /api/v1/result/{sample_id}` - Get scan results
+- 进入受保护路由前会检查 `localStorage.access_token`
+- 首页 URL/哈希检测支持结果预览并可跳转结果页
+- 结果页在样本状态为 `pending/processing` 时会自动轮询
